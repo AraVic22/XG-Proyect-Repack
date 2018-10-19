@@ -104,6 +104,49 @@ class ShowShipyardPage
 		include_once($xgp_root . 'includes/functions/GetElementPrice.' . $phpEx);
 
 		$parse = $lang;
+		 if($_GET['cancel'] == 'queue'){
+        // Comprobacion de cola
+       if ($CurrentPlanet['b_hangar_id'] == 0 OR $CurrentPlanet['b_hangar_id'] == '')
+                       {
+message("No hay ningun elemento en la cola", "Error");
+}
+
+// Reconstruir
+$Queue   = $CurrentPlanet['b_hangar_id'];
+$DO      = explode(";", $Queue);
+$QueueCountColocation = 1;
+if(count($DO) > 1) $QueueCountColocation = 2;
+$COUNTD  = count($DO)-$QueueCountColocation;
+
+// Devolver recursos
+$CASE  = explode(",", $DO[$COUNTD]);
+$Ressource = $this->GetElementRessources($CASE[0], $CASE[1]);
+$Ressource['metal']          = ($Ressource['metal']/100)*75;
+$Ressource['crystal']        = ($Ressource['crystal']/100)*75;
+$Ressource['deuterium']      = ($Ressource['deuterium']/100)*75;
+$CurrentPlanet['metal']     += $Ressource['metal'];
+$CurrentPlanet['crystal']   += $Ressource['crystal'];
+$CurrentPlanet['deuterium'] += $Ressource['deuterium'];
+
+// POP Manual
+if(count($DO) > 1){
+$LAST = $COUNTD-1;
+
+// Reconstruccion
+foreach($DO as $ID => $CAD){
+if($ID != $LAST){
+$NDO[$ID] = $CAD;
+}
+}
+
+// Grabar nuevos datos
+$REC  = implode(";", $NDO);
+doquery("UPDATE {{table}} SET  b_hangar_id = '$REC' WHERE id = '$CurrentPlanet[id]'", "planets");
+}else{
+doquery("UPDATE {{table}} SET b_hangar = 0, b_hangar_plus = 0, b_hangar_id = '' WHERE id = '$CurrentPlanet[id]'", "planets");
+}
+message("Cancelado!<br><a href=game.php?page=buildings&mode=fleet>Regresar</a>");
+} 
 
 		if (isset($_POST['fmenge']))
 		{
